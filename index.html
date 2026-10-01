@@ -3,50 +3,89 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Torneo Comercial de Bochas - Posiciones</title>
+  <title>Admin - Torneo Comercial de Bochas</title>
   <style>
     :root {
       --primary: #1b4332;
       --secondary: #2d6a4f;
       --light: #f8f9fa;
       --dark: #212529;
+      --danger: #d90429;
     }
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background-color: #e9ecef;
       margin: 0;
-      padding: 15px;
+      padding: 20px;
       color: var(--dark);
     }
     .container {
-      max-width: 900px;
+      max-width: 1100px;
       margin: 0 auto;
     }
-    h1 {
+    h1, h2, h3 {
       text-align: center;
       color: var(--primary);
-      font-size: 1.6em;
-      margin-bottom: 20px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 20px;
+      margin-bottom: 25px;
+    }
+    .card {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    label {
+      font-weight: bold;
+      font-size: 0.9em;
+    }
+    input, select, button {
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 1em;
+    }
+    button {
+      background-color: var(--secondary);
+      color: white;
+      font-weight: bold;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button:hover {
+      background-color: var(--primary);
+    }
+    .btn-danger {
+      background-color: var(--danger);
+    }
+    .btn-danger:hover {
+      background-color: #b7094c;
     }
     .zone-title {
       background: var(--primary);
       color: white;
-      padding: 12px;
-      border-radius: 8px 8px 0 0;
-      margin: 20px 0 0 0;
-      font-size: 1.1em;
-    }
-    .table-responsive {
-      overflow-x: auto;
-      background: white;
-      border-radius: 0 0 8px 8px;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.08);
-      margin-bottom: 20px;
+      padding: 10px;
+      border-radius: 6px 6px 0 0;
+      margin: 0;
     }
     table {
       width: 100%;
       border-collapse: collapse;
-      min-width: 500px;
+      background: white;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+      border-radius: 0 0 8px 8px;
+      overflow: hidden;
     }
     th, td {
       padding: 10px;
@@ -66,26 +105,94 @@
       color: #666;
       display: block;
     }
-    .live-badge {
-      display: inline-block;
-      background: #25d366;
-      color: white;
-      padding: 4px 10px;
-      border-radius: 12px;
-      font-size: 0.75em;
-      font-weight: bold;
-      margin-left: 8px;
-      vertical-align: middle;
+    .btn-sm-danger {
+      background-color: var(--danger);
+      padding: 4px 8px;
+      font-size: 0.8em;
+      border-radius: 4px;
+    }
+    .match-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px;
+      border-bottom: 1px solid #eee;
+      font-size: 0.9em;
+    }
+    .actions {
+      text-align: right;
+      margin-top: 30px;
     }
   </style>
 </head>
 <body>
 
 <div class="container">
-  <h1>🏆 Torneo Comercial de Bochas <span class="live-badge">EN VIVO</span></h1>
+  <h1>⚙️ Panel Administrador - Torneo de Bochas</h1>
 
-  <div id="tablas-container">
-    <p style="text-align:center;">Cargando posiciones...</p>
+  <div class="grid">
+    <!-- Carga de Equipos -->
+    <div class="card">
+      <h2>Inscribir Equipo</h2>
+      <form id="form-equipo">
+        <label>Zona:</label>
+        <select id="eq-zona" required>
+          <option value="Lunes">Zona Lunes</option>
+          <option value="Miércoles">Zona Miércoles</option>
+          <option value="Viernes">Zona Viernes</option>
+        </select>
+
+        <label>Nombre del Equipo:</label>
+        <input type="text" id="eq-nombre" placeholder="Ej: Los Bochófilos" required>
+
+        <label>Integrantes (separados por coma):</label>
+        <input type="text" id="eq-integrantes" placeholder="Ej: Juan, Pedro, Carlos" required>
+
+        <button type="submit">Cargar Equipo</button>
+      </form>
+    </div>
+
+    <!-- Carga de Partidos -->
+    <div class="card">
+      <h2>Cargar Resultado</h2>
+      <form id="form-partido">
+        <label>Zona:</label>
+        <select id="partido-zona" required onchange="actualizarSelectsEquipos()">
+          <option value="Lunes">Zona Lunes</option>
+          <option value="Miércoles">Zona Miércoles</option>
+          <option value="Viernes">Zona Viernes</option>
+        </select>
+
+        <label>Equipo Local:</label>
+        <select id="eq-local" required></select>
+
+        <label>Tantos Local:</label>
+        <input type="number" id="tantos-local" min="0" required>
+
+        <label>Equipo Visitante:</label>
+        <select id="eq-visitante" required></select>
+
+        <label>Tantos Visitante:</label>
+        <input type="number" id="tantos-visitante" min="0" required>
+
+        <button type="submit">Guardar Partido</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Vista previa de tablas -->
+  <h2>Vista Previa de Tablas</h2>
+  <div id="tablas-container"></div>
+
+  <!-- Historial y Anulación de Partidos -->
+  <div class="card" style="margin-top: 25px;">
+    <h2>📜 Historial de Partidos Cargados</h2>
+    <p style="font-size:0.85em; color:#666; text-align:center;">Si te equivocaste al cargar un resultado, podés anularlo acá y la tabla se recalculará automáticamente.</p>
+    <div id="historial-container"></div>
+  </div>
+
+  <div class="actions">
+    <button class="btn-danger" onclick="reiniciarTorneo()">⚠️ Reiniciar Todo el Torneo</button>
   </div>
 </div>
 
@@ -104,18 +211,191 @@
     appId: "1:215956520622:web:2d1ba04a041f1af69fb73f"
   };
 
-  // Inicializar Firebase
-
   firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
 
-  // Escuchar en tiempo real cuando el admin cargue o modifique algo
-  db.ref('torneoBochas').on('value', (snapshot) => {
-    const torneo = snapshot.val() || { Lunes: [], Miércoles: [], Viernes: [] };
-    renderizarTablas(torneo);
+  let torneo = {
+    Lunes: [],
+    Miércoles: [],
+    Viernes: []
+  };
+
+  let partidos = [];
+
+  // Escuchar datos en tiempo real
+  db.ref('torneoBochasData').on('value', (snapshot) => {
+    const data = snapshot.val();
+    if (data) {
+      torneo = data.torneo || { Lunes: [], Miércoles: [], Viernes: [] };
+      partidos = data.partidos || [];
+    } else {
+      torneo = { Lunes: [], Miércoles: [], Viernes: [] };
+      partidos = [];
+    }
+    actualizarSelectsEquipos();
+    renderizarTablas();
+    renderizarHistorial();
   });
 
-  function renderizarTablas(torneo) {
+  function guardarEnFirebase() {
+    db.ref('torneoBochasData').set({
+      torneo: torneo,
+      partidos: partidos
+    });
+  }
+
+  // Cargar equipo nuevo
+  document.getElementById('form-equipo').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const zona = document.getElementById('eq-zona').value;
+    const nombre = document.getElementById('eq-nombre').value.trim();
+    const integrantes = document.getElementById('eq-integrantes').value.trim();
+
+    if (!torneo[zona]) torneo[zona] = [];
+
+    if (torneo[zona].some(eq => eq.nombre.toLowerCase() === nombre.toLowerCase())) {
+      alert('Ya existe un equipo con ese nombre en esta zona.');
+      return;
+    }
+
+    torneo[zona].push({
+      id: Date.now(),
+      nombre: nombre,
+      integrantes: integrantes,
+      pj: 0, pg: 0, pp: 0, tf: 0, tc: 0, pts: 0
+    });
+
+    guardarEnFirebase();
+    this.reset();
+  });
+
+  // Cargar partido
+  document.getElementById('form-partido').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const zona = document.getElementById('partido-zona').value;
+    const idLocal = parseInt(document.getElementById('eq-local').value);
+    const idVisitante = parseInt(document.getElementById('eq-visitante').value);
+    const tantosL = parseInt(document.getElementById('tantos-local').value);
+    const tantosV = parseInt(document.getElementById('tantos-visitante').value);
+
+    if (isNaN(idLocal) || isNaN(idVisitante)) {
+      alert('Seleccioná ambos equipos.');
+      return;
+    }
+    if (idLocal === idVisitante) {
+      alert('El equipo local y visitante no pueden ser el mismo.');
+      return;
+    }
+    if (tantosL === tantosV) {
+      alert('En las bochas no hay empate.');
+      return;
+    }
+
+    const local = torneo[zona].find(e => e.id === idLocal);
+    const visitante = torneo[zona].find(e => e.id === idVisitante);
+
+    // Sumar estadísticas
+    local.pj++; visitante.pj++;
+    local.tf += tantosL; local.tc += tantosV;
+    visitante.tf += tantosV; visitante.tc += tantosL;
+
+    let ptsL = 0, ptsV = 0;
+    if (tantosL > tantosV) {
+      local.pg++; local.pts += 2; ptsL = 2;
+      visitante.pp++; visitante.pts += 1; ptsV = 1;
+    } else {
+      visitante.pg++; visitante.pts += 2; ptsV = 2;
+      local.pp++; local.pts += 1; ptsL = 1;
+    }
+
+    // Registrar en el historial para poder borrarlo si hay error
+    partidos.push({
+      id: Date.now(),
+      zona: zona,
+      idLocal: idLocal,
+      nombreLocal: local.nombre,
+      tantosL: tantosL,
+      ptsL: ptsL,
+      idVisitante: idVisitante,
+      nombreVisitante: visitante.nombre,
+      tantosV: tantosV,
+      ptsV: ptsV
+    });
+
+    guardarEnFirebase();
+    this.reset();
+  });
+
+  // Borrar partido cargado por error (Descontar estadísticas)
+  function eliminarPartido(partidoId) {
+    if (!confirm('¿Seguro que querés anular este partido? Se descontarán los puntos y tantos a ambos equipos.')) return;
+
+    const idx = partidos.findIndex(p => p.id === partidoId);
+    if (idx === -1) return;
+
+    const p = partidos[idx];
+    const zona = p.zona;
+
+    const local = torneo[zona].find(e => e.id === p.idLocal);
+    const visitante = torneo[zona].find(e => e.id === p.idVisitante);
+
+    if (local) {
+      local.pj--;
+      local.tf -= p.tantosL;
+      local.tc -= p.tantosV;
+      local.pts -= p.ptsL;
+      if (p.ptsL === 2) local.pg--; else local.pp--;
+    }
+
+    if (visitante) {
+      visitante.pj--;
+      visitante.tf -= p.tantosV;
+      visitante.tc -= p.tantosL;
+      visitante.pts -= p.ptsV;
+      if (p.ptsV === 2) visitante.pg--; else visitante.pp--;
+    }
+
+    partidos.splice(idx, 1);
+    guardarEnFirebase();
+  }
+
+  // Eliminar un equipo
+  function eliminarEquipo(zona, equipoId) {
+    const eq = torneo[zona].find(e => e.id === equipoId);
+    if (!eq) return;
+
+    if (eq.pj > 0) {
+      alert('No podés borrar un equipo que ya tiene partidos jugados. Anulá sus partidos primero.');
+      return;
+    }
+
+    if (confirm(`¿Seguro que querés eliminar al equipo "${eq.nombre}"?`)) {
+      torneo[zona] = torneo[zona].filter(e => e.id !== equipoId);
+      guardarEnFirebase();
+    }
+  }
+
+  function actualizarSelectsEquipos() {
+    const zona = document.getElementById('partido-zona').value;
+    const selectL = document.getElementById('eq-local');
+    const selectV = document.getElementById('eq-visitante');
+
+    selectL.innerHTML = '';
+    selectV.innerHTML = '';
+
+    if (!torneo[zona] || torneo[zona].length === 0) {
+      selectL.innerHTML = '<option value="">Sin equipos cargados</option>';
+      selectV.innerHTML = '<option value="">Sin equipos cargados</option>';
+      return;
+    }
+
+    torneo[zona].forEach(eq => {
+      selectL.innerHTML += `<option value="${eq.id}">${eq.nombre}</option>`;
+      selectV.innerHTML += `<option value="${eq.id}">${eq.nombre}</option>`;
+    });
+  }
+
+  function renderizarTablas() {
     const container = document.getElementById('tablas-container');
     container.innerHTML = '';
 
@@ -128,19 +408,19 @@
 
       let html = `
         <h3 class="zone-title">Zona ${zona}</h3>
-        <div class="table-responsive">
-          <table>
-            <thead>
-              <tr>
-                <th style="text-align:left; padding-left:15px;">Equipo / Integrantes</th>
-                <th>Pts</th><th>PJ</th><th>PG</th><th>PP</th><th>TF</th><th>TC</th><th>Dif</th>
-              </tr>
-            </thead>
-            <tbody>
+        <table>
+          <thead>
+            <tr>
+              <th style="text-align:left; padding-left:15px;">Equipo / Integrantes</th>
+              <th>Pts</th><th>PJ</th><th>PG</th><th>PP</th><th>TF</th><th>TC</th><th>Dif</th>
+              <th>Acción</th>
+            </tr>
+          </thead>
+          <tbody>
       `;
 
       if (equiposOrdenados.length === 0) {
-        html += `<tr><td colspan="8">No hay equipos registrados en esta zona.</td></tr>`;
+        html += `<tr><td colspan="9">No hay equipos cargados.</td></tr>`;
       } else {
         equiposOrdenados.forEach(eq => {
           const dif = eq.tf - eq.tc;
@@ -154,14 +434,47 @@
               <td>${eq.pj}</td><td>${eq.pg}</td><td>${eq.pp}</td>
               <td>${eq.tf}</td><td>${eq.tc}</td>
               <td>${dif > 0 ? '+' + dif : dif}</td>
+              <td>
+                <button class="btn-sm-danger" onclick="eliminarEquipo('${zona}', ${eq.id})">🗑️ Borrar</button>
+              </td>
             </tr>
           `;
         });
       }
 
-      html += `</tbody></table></div>`;
+      html += `</tbody></table>`;
       container.innerHTML += html;
     });
+  }
+
+  function renderizarHistorial() {
+    const container = document.getElementById('historial-container');
+    container.innerHTML = '';
+
+    if (partidos.length === 0) {
+      container.innerHTML = '<p style="text-align:center; color:#888;">No hay partidos cargados todavía.</p>';
+      return;
+    }
+
+    [...partidos].reverse().forEach(p => {
+      container.innerHTML += `
+        <div class="match-item">
+          <div>
+            <strong>[Zona ${p.zona}]</strong> ${p.nombreLocal} <strong>${p.tantosL}</strong> - <strong>${p.tantosV}</strong> ${p.nombreVisitante}
+          </div>
+          <button class="btn-sm-danger" onclick="eliminarPartido(${p.id})">❌ Anular Partido</button>
+        </div>
+      `;
+    });
+  }
+
+  function reiniciarTorneo() {
+    if (confirm('¿Seguro que querés borrar todos los datos del torneo?')) {
+      db.ref('torneoBochasData').set({
+        torneo: { Lunes: [], Miércoles: [], Viernes: [] },
+        partidos: []
+      });
+    }
   }
 </script>
 
