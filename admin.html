@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin - Torneo Comercial de Bochas</title>
+  <style>
+    :root {
+      --primary: #1b4332;
+      --secondary: #2d6a4f;
+      --light: #f8f9fa;
+      --dark: #212529;
+      --danger: #d90429;
+    }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #e9ecef;
+      margin: 0;
+      padding: 20px;
+      color: var(--dark);
+    }
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    h1, h2, h3 {
+      text-align: center;
+      color: var(--primary);
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 20px;
+      margin-bottom: 25px;
+    }
+    .card {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    label {
+      font-weight: bold;
+      font-size: 0.9em;
+    }
+    input, select, button {
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 1em;
+    }
+    button {
+      background-color: var(--secondary);
+      color: white;
+      font-weight: bold;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button:hover {
+      background-color: var(--primary);
+    }
+    .btn-danger {
+      background-color: var(--danger);
+      margin-top: 15px;
+    }
+    .btn-danger:hover {
+      background-color: #b7094c;
+    }
+    .zone-title {
+      background: var(--primary);
+      color: white;
+      padding: 10px;
+      border-radius: 6px 6px 0 0;
+      margin: 0;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+      border-radius: 0 0 8px 8px;
+      overflow: hidden;
+    }
+    th, td {
+      padding: 10px;
+      text-align: center;
+      border-bottom: 1px solid #ddd;
+    }
+    th {
+      background-color: var(--secondary);
+      color: white;
+      font-size: 0.85em;
+    }
+    tr:nth-child(even) {
+      background-color: #f8f9fa;
+    }
+    .team-members {
+      font-size: 0.8em;
+      color: #666;
+      display: block;
+    }
+    .actions {
+      text-align: right;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>⚙️ Panel Administrador - Torneo de Bochas</h1>
+
+  <div class="grid">
+    <!-- Carga de Equipos -->
+    <div class="card">
+      <h2>Inscribir Equipo</h2>
+      <form id="form-equipo">
+        <label>Zona:</label>
+        <select id="eq-zona" required>
+          <option value="Lunes">Zona Lunes</option>
+          <option value="Miércoles">Zona Miércoles</option>
+          <option value="Viernes">Zona Viernes</option>
+        </select>
+
+        <label>Nombre del Equipo:</label>
+        <input type="text" id="eq-nombre" placeholder="Ej: Los Bochófilos" required>
+
+        <label>Integrantes (separados por coma):</label>
+        <input type="text" id="eq-integrantes" placeholder="Ej: Juan, Pedro, Carlos" required>
+
+        <button type="submit">Cargar Equipo</button>
+      </form>
+    </div>
+
+    <!-- Carga de Partidos -->
+    <div class="card">
+      <h2>Cargar Resultado</h2>
+      <form id="form-partido">
+        <label>Zona:</label>
+        <select id="partido-zona" required onchange="actualizarSelectsEquipos()">
+          <option value="Lunes">Zona Lunes</option>
+          <option value="Miércoles">Zona Miércoles</option>
+          <option value="Viernes">Zona Viernes</option>
+        </select>
+
+        <label>Equipo Local:</label>
+        <select id="eq-local" required></select>
+
+        <label>Tantos Local:</label>
+        <input type="number" id="tantos-local" min="0" required>
+
+        <label>Equipo Visitante:</label>
+        <select id="eq-visitante" required></select>
+
+        <label>Tantos Visitante:</label>
+        <input type="number" id="tantos-visitante" min="0" required>
+
+        <button type="submit">Guardar Partido</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Vista previa de tablas -->
+  <h2>Vista Previa de Tablas</h2>
+  <div id="tablas-container"></div>
+
+  <div class="actions">
+    <button class="btn-danger" onclick="reiniciarTorneo()">⚠️ Reiniciar Todo el Torneo</button>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyA4_cY2N2x_pV2koJVf4qGL8qCuDUywueE",
+    authDomain: "comercial-fc687.firebaseapp.com",
+    databaseURL: "https://comercial-fc687-default-rtdb.firebaseio.com",
+    projectId: "comercial-fc687",
+    storageBucket: "comercial-fc687.firebasestorage.app",
+    messagingSenderId: "215956520622",
+    appId: "1:215956520622:web:2d1ba04a041f1af69fb73f"
+  };
+
+  // Inicializar Firebase
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+
+  let torneo = {
+    Lunes: [],
+    Miércoles: [],
+    Viernes: []
+  };
+
+  // Escuchar cambios en la base de datos en tiempo real
+  db.ref('torneoBochas').on('value', (snapshot) => {
+    const data = snapshot.val();
+    torneo = data || { Lunes: [], Miércoles: [], Viernes: [] };
+    actualizarSelectsEquipos();
+    renderizarTablas();
+  });
+
+  function guardarEnFirebase() {
+    db.ref('torneoBochas').set(torneo);
+  }
+
+  // Cargar equipo nuevo
+  document.getElementById('form-equipo').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const zona = document.getElementById('eq-zona').value;
+    const nombre = document.getElementById('eq-nombre').value.trim();
+    const integrantes = document.getElementById('eq-integrantes').value.trim();
+
+    if (!torneo[zona]) torneo[zona] = [];
+
+    if (torneo[zona].some(eq => eq.nombre.toLowerCase() === nombre.toLowerCase())) {
+      alert('Ya existe un equipo con ese nombre en esta zona.');
+      return;
+    }
+
+    torneo[zona].push({
+      id: Date.now(),
+      nombre: nombre,
+      integrantes: integrantes,
+      pj: 0, pg: 0, pp: 0, tf: 0, tc: 0, pts: 0
+    });
+
+    guardarEnFirebase();
+    this.reset();
+  });
+
+  // Cargar partido
+  document.getElementById('form-partido').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const zona = document.getElementById('partido-zona').value;
+    const idLocal = parseInt(document.getElementById('eq-local').value);
+    const idVisitante = parseInt(document.getElementById('eq-visitante').value);
+    const tantosL = parseInt(document.getElementById('tantos-local').value);
+    const tantosV = parseInt(document.getElementById('tantos-visitante').value);
+
+    if (isNaN(idLocal) || isNaN(idVisitante)) {
+      alert('Seleccioná ambos equipos.');
+      return;
+    }
+    if (idLocal === idVisitante) {
+      alert('El equipo local y visitante no pueden ser el mismo.');
+      return;
+    }
+    if (tantosL === tantosV) {
+      alert('En las bochas no hay empate.');
+      return;
+    }
+
+    const local = torneo[zona].find(e => e.id === idLocal);
+    const visitante = torneo[zona].find(e => e.id === idVisitante);
+
+    local.pj++; visitante.pj++;
+    local.tf += tantosL; local.tc += tantosV;
+    visitante.tf += tantosV; visitante.tc += tantosL;
+
+    if (tantosL > tantosV) {
+      local.pg++; local.pts += 2;
+      visitante.pp++; visitante.pts += 1;
+    } else {
+      visitante.pg++; visitante.pts += 2;
+      local.pp++; local.pts += 1;
+    }
+
+    guardarEnFirebase();
+    this.reset();
+  });
+
+  function actualizarSelectsEquipos() {
+    const zona = document.getElementById('partido-zona').value;
+    const selectL = document.getElementById('eq-local');
+    const selectV = document.getElementById('eq-visitante');
+
+    selectL.innerHTML = '';
+    selectV.innerHTML = '';
+
+    if (!torneo[zona] || torneo[zona].length === 0) {
+      selectL.innerHTML = '<option value="">Sin equipos cargados</option>';
+      selectV.innerHTML = '<option value="">Sin equipos cargados</option>';
+      return;
+    }
+
+    torneo[zona].forEach(eq => {
+      selectL.innerHTML += `<option value="${eq.id}">${eq.nombre}</option>`;
+      selectV.innerHTML += `<option value="${eq.id}">${eq.nombre}</option>`;
+    });
+  }
+
+  function renderizarTablas() {
+    const container = document.getElementById('tablas-container');
+    container.innerHTML = '';
+
+    ['Lunes', 'Miércoles', 'Viernes'].forEach(zona => {
+      const lista = torneo[zona] || [];
+      const equiposOrdenados = [...lista].sort((a, b) => {
+        if (b.pts !== a.pts) return b.pts - a.pts;
+        return (b.tf - b.tc) - (a.tf - a.tc);
+      });
+
+      let html = `
+        <h3 class="zone-title">Zona ${zona}</h3>
+        <table>
+          <thead>
+            <tr>
+              <th style="text-align:left; padding-left:15px;">Equipo / Integrantes</th>
+              <th>Pts</th><th>PJ</th><th>PG</th><th>PP</th><th>TF</th><th>TC</th><th>Dif</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+
+      if (equiposOrdenados.length === 0) {
+        html += `<tr><td colspan="8">No hay equipos cargados.</td></tr>`;
+      } else {
+        equiposOrdenados.forEach(eq => {
+          const dif = eq.tf - eq.tc;
+          html += `
+            <tr>
+              <td style="text-align:left; padding-left:15px;">
+                <strong>${eq.nombre}</strong>
+                <span class="team-members">👥 ${eq.integrantes}</span>
+              </td>
+              <td><strong>${eq.pts}</strong></td>
+              <td>${eq.pj}</td><td>${eq.pg}</td><td>${eq.pp}</td>
+              <td>${eq.tf}</td><td>${eq.tc}</td>
+              <td>${dif > 0 ? '+' + dif : dif}</td>
+            </tr>
+          `;
+        });
+      }
+
+      html += `</tbody></table>`;
+      container.innerHTML += html;
+    });
+  }
+
+  function reiniciarTorneo() {
+    if (confirm('¿Seguro que querés borrar todos los datos del torneo?')) {
+      db.ref('torneoBochas').set({ Lunes: [], Miércoles: [], Viernes: [] });
+    }
+  }
+</script>
+
+</body>
+</html>

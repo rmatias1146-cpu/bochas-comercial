@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Torneo Comercial de Bochas - Posiciones</title>
+  <style>
+    :root {
+      --primary: #1b4332;
+      --secondary: #2d6a4f;
+      --light: #f8f9fa;
+      --dark: #212529;
+    }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #e9ecef;
+      margin: 0;
+      padding: 15px;
+      color: var(--dark);
+    }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    h1 {
+      text-align: center;
+      color: var(--primary);
+      font-size: 1.6em;
+      margin-bottom: 20px;
+    }
+    .zone-title {
+      background: var(--primary);
+      color: white;
+      padding: 12px;
+      border-radius: 8px 8px 0 0;
+      margin: 20px 0 0 0;
+      font-size: 1.1em;
+    }
+    .table-responsive {
+      overflow-x: auto;
+      background: white;
+      border-radius: 0 0 8px 8px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.08);
+      margin-bottom: 20px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 500px;
+    }
+    th, td {
+      padding: 10px;
+      text-align: center;
+      border-bottom: 1px solid #ddd;
+    }
+    th {
+      background-color: var(--secondary);
+      color: white;
+      font-size: 0.85em;
+    }
+    tr:nth-child(even) {
+      background-color: #f8f9fa;
+    }
+    .team-members {
+      font-size: 0.8em;
+      color: #666;
+      display: block;
+    }
+    .live-badge {
+      display: inline-block;
+      background: #25d366;
+      color: white;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 0.75em;
+      font-weight: bold;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>🏆 Torneo Comercial de Bochas <span class="live-badge">EN VIVO</span></h1>
+
+  <div id="tablas-container">
+    <p style="text-align:center;">Cargando posiciones...</p>
+  </div>
+</div>
+
+<!-- SDKs de Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyA4_cY2N2x_pV2koJVf4qGL8qCuDUywueE",
+    authDomain: "comercial-fc687.firebaseapp.com",
+    databaseURL: "https://comercial-fc687-default-rtdb.firebaseio.com",
+    projectId: "comercial-fc687",
+    storageBucket: "comercial-fc687.firebasestorage.app",
+    messagingSenderId: "215956520622",
+    appId: "1:215956520622:web:2d1ba04a041f1af69fb73f"
+  };
+
+  // Inicializar Firebase
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+
+  // Escuchar en tiempo real cuando el admin cargue o modifique algo
+  db.ref('torneoBochas').on('value', (snapshot) => {
+    const torneo = snapshot.val() || { Lunes: [], Miércoles: [], Viernes: [] };
+    renderizarTablas(torneo);
+  });
+
+  function renderizarTablas(torneo) {
+    const container = document.getElementById('tablas-container');
+    container.innerHTML = '';
+
+    ['Lunes', 'Miércoles', 'Viernes'].forEach(zona => {
+      const lista = torneo[zona] || [];
+      const equiposOrdenados = [...lista].sort((a, b) => {
+        if (b.pts !== a.pts) return b.pts - a.pts;
+        return (b.tf - b.tc) - (a.tf - a.tc);
+      });
+
+      let html = `
+        <h3 class="zone-title">Zona ${zona}</h3>
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th style="text-align:left; padding-left:15px;">Equipo / Integrantes</th>
+                <th>Pts</th><th>PJ</th><th>PG</th><th>PP</th><th>TF</th><th>TC</th><th>Dif</th>
+              </tr>
+            </thead>
+            <tbody>
+      `;
+
+      if (equiposOrdenados.length === 0) {
+        html += `<tr><td colspan="8">No hay equipos registrados en esta zona.</td></tr>`;
+      } else {
+        equiposOrdenados.forEach(eq => {
+          const dif = eq.tf - eq.tc;
+          html += `
+            <tr>
+              <td style="text-align:left; padding-left:15px;">
+                <strong>${eq.nombre}</strong>
+                <span class="team-members">👥 ${eq.integrantes}</span>
+              </td>
+              <td><strong>${eq.pts}</strong></td>
+              <td>${eq.pj}</td><td>${eq.pg}</td><td>${eq.pp}</td>
+              <td>${eq.tf}</td><td>${eq.tc}</td>
+              <td>${dif > 0 ? '+' + dif : dif}</td>
+            </tr>
+          `;
+        });
+      }
+
+      html += `</tbody></table></div>`;
+      container.innerHTML += html;
+    });
+  }
+</script>
+
+</body>
+</html>
